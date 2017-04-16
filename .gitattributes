@@ -12,3 +12,8 @@ tests/data/BioData/homologene.data.txt filter=lfs diff=lfs merge=lfs -text
 tests/data/BioData/interpro.txt filter=lfs diff=lfs merge=lfs -text
 tests/data/BioData/pathways.keg filter=lfs diff=lfs merge=lfs -text
 tests/data/BioData/uniprot-for_test.rdf filter=lfs diff=lfs merge=lfs -text
+tests/data/BioData/full/uniprot-mus_musculus.rdf filter=lfs diff=lfs merge=lfs -text
+tests/data/BioData/full/uniprot-c_elegans.rdf filter=lfs diff=lfs merge=lfs -text
+tests/data/BioData/full/uniprot-melanogaster.rdf filter=lfs diff=lfs merge=lfs -text
+tests/data/BioData/full/uniprot-rattus_norvegicus.rdf filter=lfs diff=lfs merge=lfs -text
+tests/data/BioData/full/go.owl filter=lfs diff=lfs merge=lfs -text
