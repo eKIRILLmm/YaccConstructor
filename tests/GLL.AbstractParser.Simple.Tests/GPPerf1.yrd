@@ -1,9 +1,9 @@
 [<Start>]
-s1: s
 
-s : SCOR s SCO {""}
-  | TR s T {""}
-  | SCOR SCO {""}
-  | TR T {""}
 
-f : OTHER
+s : query
+
+query : PROTEIN similar PROTEIN  RCODESFOR GENE REFERS PHENOTYPE
+similar : BELONGS BIOPROC RBELONGS
+
+other : OTHER | CODESFOR | FAM_OR_DOM | HAS_FAM_OR_DOM

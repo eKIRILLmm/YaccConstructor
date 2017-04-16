@@ -1,9 +1,9 @@
 [<Start>]
-s1 : b SCO
 
 
-b : SCOR b SCO  | SCOR SCO 
+s : protein
 
-s: OTHER | T | TR
+protein : PROTEIN similar protein | PROTEIN
+similar : BELONGS BIOPROC RBELONGS
 
-f: OTHER | T | TR
+other : OTHER | CODESFOR | FAM_OR_DOM | HAS_FAM_OR_DOM | RCODESFOR | GENE | REFERS | PHENOTYPE
