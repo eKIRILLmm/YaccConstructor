@@ -17,3 +17,5 @@ tests/data/BioData/full/uniprot-c_elegans.rdf filter=lfs diff=lfs merge=lfs -tex
 tests/data/BioData/full/uniprot-melanogaster.rdf filter=lfs diff=lfs merge=lfs -text
 tests/data/BioData/full/uniprot-rattus_norvegicus.rdf filter=lfs diff=lfs merge=lfs -text
 tests/data/BioData/full/go.owl filter=lfs diff=lfs merge=lfs -text
+*.gene_info filter=lfs diff=lfs merge=lfs -text
+Caenorhabditis_elegans.gene_info filter=lfs diff=lfs merge=lfs -text

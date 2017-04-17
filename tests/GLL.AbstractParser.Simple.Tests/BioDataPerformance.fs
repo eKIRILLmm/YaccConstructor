@@ -297,6 +297,10 @@ let getParseInputGraph files =
         | "uniprot-melanogaster.rdf" 
         | "uniprot-mus_musculus.rdf" 
         | "uniprot-rattus_norvegicus.rdf" -> getEdgesFromUniprot f
+        | "Caenorhabditis_elegans.gene_info"
+        | "Drosophila_melanogaster.gene_info"
+        | "Mus_musculus.gene_info"
+        | "Rattus_norvegicus.gene_info"
         | "Homo_sapiens.gene_info" -> getEdgesFromEntrezGene f
         | "interpro.txt" -> getEdgesFromInterpro f
         | "pathways.keg" -> getEdgesFromKeggPath f
@@ -330,6 +334,7 @@ let processFiles files =
 //        printfn "%A; %A" (e.Tag) (e.ToString())
     let cnt = 1
     let start = System.DateTime.Now
+    printfn "%A" edges
     let root1 =
         Yard.Generators.GLL.AbstractParser.getAllRangesForStartState GLL.GPPerf1.parserSource g1
         |> Seq.length
