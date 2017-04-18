@@ -288,30 +288,47 @@ let getEdgesFromUniprot file =
     edgs
 
 let getParseInputGraph files =
-    let getEdges f = 
-        match System.IO.Path.GetFileName f with
-        | "go.owl" -> getEdgesFromGO f
-        | "uniprot-for_test.rdf" 
-        | "uniprot-homo_sapiens.rdf" 
-        | "uniprot-c_elegans.rdf" 
-        | "uniprot-melanogaster.rdf" 
-        | "uniprot-mus_musculus.rdf" 
-        | "uniprot-rattus_norvegicus.rdf" -> getEdgesFromUniprot f
-        | "Caenorhabditis_elegans.gene_info"
-        | "Drosophila_melanogaster.gene_info"
-        | "Mus_musculus.gene_info"
-        | "Rattus_norvegicus.gene_info"
-        | "Homo_sapiens.gene_info" -> getEdgesFromEntrezGene f
-        | "interpro.txt" -> getEdgesFromInterpro f
-        | "pathways.keg" -> getEdgesFromKeggPath f
-        | "geneToPath.txt" -> getEdgesFromKeggGeneMap f
-        | "homologene.data.txt" -> getEdgesFromHomologene f
-        | _ -> [||]
+//    let getEdges f = 
+//        match System.IO.Path.GetFileName f with
+//        | "go.owl" -> getEdgesFromGO f
+//        | "uniprot-for_test.rdf" 
+//        | "uniprot-homo_sapiens.rdf" 
+//        | "uniprot-c_elegans.rdf" 
+//        | "uniprot-melanogaster.rdf" 
+//        | "uniprot-mus_musculus.rdf" 
+//        | "uniprot-rattus_norvegicus.rdf" -> getEdgesFromUniprot f
+//        | "Caenorhabditis_elegans.gene_info"
+//        | "Drosophila_melanogaster.gene_info"
+//        | "Mus_musculus.gene_info"
+//        | "Rattus_norvegicus.gene_info"
+//        | "Homo_sapiens.gene_info" -> getEdgesFromEntrezGene f
+//        | "interpro.txt" -> getEdgesFromInterpro f
+//        | "pathways.keg" -> getEdgesFromKeggPath f
+//        | "geneToPath.txt" -> getEdgesFromKeggGeneMap f
+//        | "homologene.data.txt" -> getEdgesFromHomologene f
+//        | _ -> [||]
+//
+//    let edgs = files 
+//            |> Array.map getEdges 
+//            |> Array.concat 
+    
+    let edgs = 
+        [|
+            1, "Gene_1", 2;
+            2, "codes_for", 3;
+            3, "Protein_1", 4;
+            4, "belongs_to", 5;
+            5, "GO_1", 6;
+            6, "-belongs_to", 7;
+            7, "Protein_2", 8;
+            8, "-codes_for", 9;
+            9, "Gene_2", 10;
 
-    let edgs = files 
-            |> Array.map getEdges 
-            |> Array.concat 
-
+//            4, "-codes_for", 1;
+//            6, "-belongs_to", 3;
+//            8, "belongs_to", 5;
+//            10, "codes_for", 7;
+        |]
 
     let allVs = edgs |> Array.collect (fun (f,l,t) -> [|f * 1<positionInInput>; t * 1<positionInInput>|]) |> Set.ofArray |> Array.ofSeq
     let eofV = allVs.Length

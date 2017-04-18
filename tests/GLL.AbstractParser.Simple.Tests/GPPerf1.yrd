@@ -1,9 +1,11 @@
 [<Start>]
 
+s : gene
 
-s : query
+protein : protein psimilar PROTEIN | PROTEIN
+gene : gene gsimilar GENE | GENE
 
-query : PROTEIN similar PROTEIN  RCODESFOR GENE REFERS PHENOTYPE
-similar : BELONGS BIOPROC RBELONGS
+psimilar : BELONGS BIOPROC RBELONGS
+gsimilar : CODESFOR protein RCODESFOR
 
-other : OTHER | CODESFOR | FAM_OR_DOM | HAS_FAM_OR_DOM
+other : OTHER | FAM_OR_DOM | HAS_FAM_OR_DOM | REFERS | PHENOTYPE
