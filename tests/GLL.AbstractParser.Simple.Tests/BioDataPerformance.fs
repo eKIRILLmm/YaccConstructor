@@ -30,7 +30,7 @@ let getTokenFromTag tokenizer (tag:string) =
     | Equals "codes_for" () -> tokenizer "CODESFOR"
     | Equals "-codes_for" () -> tokenizer "RCODESFOR"
     | Equals "refers_to" () -> tokenizer "REFERS"
-    | Prefix "GO_" () -> tokenizer "BIOPROC"
+    | Prefix "GO_" () -> tokenizer "GO"
     | Prefix "FamOrDom_" () -> tokenizer "FAM_OR_DOM"
     | Equals "has_FamOrDom" () -> tokenizer "HAS_FAM_OR_DOM"
     | _ -> tokenizer "OTHER"

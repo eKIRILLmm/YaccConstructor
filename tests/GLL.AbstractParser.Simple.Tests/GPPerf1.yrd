@@ -2,10 +2,12 @@
 
 s : gene
 
-protein : protein psimilar PROTEIN | PROTEIN
-gene : gene gsimilar GENE | GENE
+v : protein | gene | go
 
-psimilar : BELONGS BIOPROC RBELONGS
-gsimilar : CODESFOR protein RCODESFOR
+similar : CODESFOR v RCODESFOR | BELONGS v RBELONGS | INTERACTS
+
+protein : protein similar PROTEIN | PROTEIN
+gene : gene similar GENE | GENE
+go : go similar GO | GO
 
 other : OTHER | FAM_OR_DOM | HAS_FAM_OR_DOM | REFERS | PHENOTYPE
