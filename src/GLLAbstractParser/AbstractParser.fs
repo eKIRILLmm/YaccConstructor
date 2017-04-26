@@ -174,23 +174,23 @@ let parse (parser : ParserSourceGLL) (input : IParserInput) (buildTree : bool) =
                    //pushContext nextPosInInput nextPosInGrammar currentContext.GssVertex (currentContext.Length + 1us)
             )
 
-    gss, 
-        if buildTree
-        then 
-            Some <| new Tree<_>(sppf.GetRoots gss input.InitialPositions.[0], input.PositionToString)
-        else
-            None
+    gss, sppf
        
 let findVertices (gss:GSS) state : seq<GSSVertex> =    
     gss.Vertices
     |> Seq.filter (fun v -> v.Nonterm = state)
 
 let buildAst (parser : ParserSourceGLL) (input : IParserInput) = 
-    let gss, tree = parse parser input true
-    let tree = if tree.IsNone
-                then failwith "NotParsed"
-                else tree.Value
+    let gss, sppf = parse parser input true
+    let tree = new Tree<_>(sppf.GetRoots gss input.InitialPositions.[0], input.PositionToString)
     tree
+
+let getAllSPPFRoots (parser : ParserSourceGLL) (input : IParserInput) = 
+    let gss, sppf = parse parser input true
+    let forest = 
+        input.InitialPositions
+        |> Array.map (fun p -> new Tree<_>(sppf.GetRoots gss p, input.PositionToString))
+    forest
         
 let isParsed (parser : ParserSourceGLL) (input : LinearInput) = 
     let gss, _ = parse parser input false

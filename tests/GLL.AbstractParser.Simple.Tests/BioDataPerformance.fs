@@ -25,6 +25,7 @@ let getTokenFromTag tokenizer (tag:string) =
     | Prefix "Protein_" () -> tokenizer "PROTEIN"
     | Prefix "Gene_" () -> tokenizer "GENE"
     | Prefix "Phenotype_" () -> tokenizer "PHENOTYPE"
+    | Equals "interacts" () -> tokenizer "INTERACTS" 
     | Equals "belongs_to" () -> tokenizer "BELONGS" 
     | Equals "-belongs_to" () -> tokenizer "RBELONGS" 
     | Equals "codes_for" () -> tokenizer "CODESFOR"
@@ -324,10 +325,13 @@ let getParseInputGraph files =
             8, "-codes_for", 9;
             9, "Gene_2", 10;
 
-//            4, "-codes_for", 1;
-//            6, "-belongs_to", 3;
-//            8, "belongs_to", 5;
-//            10, "codes_for", 7;
+            4, "-codes_for", 1;
+            6, "-belongs_to", 3;
+            8, "belongs_to", 5;
+            10, "codes_for", 7;
+//
+//            4, "interacts", 7;
+//            8, "interacts", 3; 
         |]
 
     let allVs = edgs |> Array.collect (fun (f,l,t) -> [|f * 1<positionInInput>; t * 1<positionInInput>|]) |> Set.ofArray |> Array.ofSeq
@@ -353,12 +357,15 @@ let processFiles files =
     let start = System.DateTime.Now
     printfn "%A" edges
     let root1 =
-        Yard.Generators.GLL.AbstractParser.getAllRangesForStartState GLL.GPPerf1.parserSource g1
-        |> Seq.length
-    
+        Yard.Generators.GLL.AbstractParser.getAllSPPFRoots GLL.GPPerf1.parserSource g1
+    //root1.AstToDot GLL.GPPerf1.intToString "qwe.dot"
+//    let root1 =
+//        Yard.Generators.GLL.AbstractParser.getAllRangesForStartState GLL.GPPerf1.parserSource g1
+//        |> Seq.length
+
     let time1 = (System.DateTime.Now - start).TotalMilliseconds / (float cnt)
 
-
+    printfn "roots %A" root1.Length
     edges, time1, root1
 
 let performTests () =
