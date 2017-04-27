@@ -2,8 +2,10 @@
 
 s : gene
 
+v : protein | gene | go
 
-gene : GENE
+similar : CODESFOR v RCODESFOR | BELONGS v RBELONGS | INTERACTS
 
-
-other : OTHER | FAM_OR_DOM | HAS_FAM_OR_DOM | REFERS | PHENOTYPE | CODESFOR | RCODESFOR | BELONGS | RBELONGS | PROTEIN | GO
+protein : protein similar PROTEIN | PROTEIN
+gene : gene similar GENE | GENE
+go : go similar GO | GO

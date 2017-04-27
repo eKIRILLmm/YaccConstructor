@@ -314,34 +314,51 @@ let getParseInputGraph files =
 //            |> Array.concat 
     
     let edgs = 
-        [|
-            1, "Gene_1", 2;
-            2, "codes_for", 3;
-            3, "Protein_1", 4;
-            4, "belongs_to", 5;
-            5, "GO_1", 6;
-            6, "-belongs_to", 7;
-            7, "Protein_2", 8;
-            8, "-codes_for", 9;
-            9, "Gene_2", 10;
+        let g1 = new LabelledVertex<_>(1, "Gene_1")
+        let g2 = new LabelledVertex<_>(2, "Gene_2")
+        let p1 = new LabelledVertex<_>(3, "Protein_1")
+        let p2 = new LabelledVertex<_>(4, "Protein_2")
+        let go1 = new LabelledVertex<_>(5, "GO_1")
 
-            4, "-codes_for", 1;
-            6, "-belongs_to", 3;
-            8, "belongs_to", 5;
-            10, "codes_for", 7;
+        [|
+            new TaggedEdgeWithPos<_,_>(6, g1, p1, "codes_for");
+            new TaggedEdgeWithPos<_,_>(7, p1, go1, "belongs_to");
+            new TaggedEdgeWithPos<_,_>(8, go1, p2, "-belongs_to");
+            new TaggedEdgeWithPos<_,_>(9, p2, g2, "-codes_for");
+
+            new TaggedEdgeWithPos<_,_>(10, p1, g1, "-codes_for");
+            new TaggedEdgeWithPos<_,_>(11, go1, p1, "-belongs_to");
+            new TaggedEdgeWithPos<_,_>(12, p2, go1, "belongs_to");
+            new TaggedEdgeWithPos<_,_>(0, g2, p2, "codes_for");
+
+
+//            1, "Gene_1", 2;
+//            2, "codes_for", 3;
+//            3, "Protein_1", 4;
+//            4, "belongs_to", 5;
+//            5, "GO_1", 6;
+//            6, "-belongs_to", 7;
+//            7, "Protein_2", 8;
+//            8, "-codes_for", 9;
+//            9, "Gene_2", 10;
+//
+//            4, "-codes_for", 1;
+//            6, "-belongs_to", 3;
+//            8, "belongs_to", 5;
+//            10, "codes_for", 7;
 //
 //            4, "interacts", 7;
 //            8, "interacts", 3; 
         |]
 
-    let allVs = edgs |> Array.collect (fun (f,l,t) -> [|f * 1<positionInInput>; t * 1<positionInInput>|]) |> Set.ofArray |> Array.ofSeq
-    let eofV = allVs.Length
+//    let allVs = edgs |> Array.collect (fun (f,l,t) -> [|f * 1<positionInInput>; t * 1<positionInInput>|]) |> Set.ofArray |> Array.ofSeq
+//    let eofV = allVs.Length
         
-    let graph = new SimpleInputGraph<_>(allVs, getTokenFromTag (fun x -> (int) GLL.GPPerf1.stringToToken.[x]))
+    let graph = new GraphLabelledVertex<_>(13, getTokenFromTag (fun x -> (int) GLL.GPPerf1.stringToToken.[x]))
     
     edgs
-    |> Array.collect (fun (f,l,t) -> [|new ParserEdge<_>(f, t, l)|])
-    |> graph.AddVerticesAndEdgeRange
+    //|> Array.collect (fun (f,l,t) -> [|new ParserEdge<_>(f, t, l)|])
+    |> graph.AddVerticesAndEdgeRangeWithDict
     |> ignore
 
 
@@ -358,15 +375,15 @@ let processFiles files =
     printfn "%A" edges
     let root1 =
         Yard.Generators.GLL.AbstractParser.getAllSPPFRoots GLL.GPPerf1.parserSource g1
-    //root1.AstToDot GLL.GPPerf1.intToString "qwe.dot"
+    root1.[10].AstToDot GLL.GPPerf1.intToString "result.dot"
 //    let root1 =
 //        Yard.Generators.GLL.AbstractParser.getAllRangesForStartState GLL.GPPerf1.parserSource g1
 //        |> Seq.length
 
     let time1 = (System.DateTime.Now - start).TotalMilliseconds / (float cnt)
 
-    printfn "roots %A" root1.Length
-    edges, time1, root1
+//    printfn "roots %A" root1.Length
+    edges, time1
 
 let performTests () =
     let basePath = @"..\..\..\data\BioData"
