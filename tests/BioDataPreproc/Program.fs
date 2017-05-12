@@ -15,7 +15,7 @@ let loadFromFile (file:string) =
     g
 
 let writeTriplesFromHomologene file (sw:StreamWriter) =
-    let lines = File.ReadAllLines(file)
+    let lines = File.ReadLines(file)
     
     for l in lines do
         let elems = l.Split('\t')
@@ -23,10 +23,11 @@ let writeTriplesFromHomologene file (sw:StreamWriter) =
         let gene = "Gene_" + elems.[2]
         sw.WriteLine(gene + "\t" + "is_homologous_to" + "\t" + homoloGeneGroup)
         sw.WriteLine(homoloGeneGroup + "\t" + "-is_homologous_to" + "\t" + gene)
+        
     printfn "Homologene processed"
     
 let writeTriplesFromKegg mapFile keggFile (sw:StreamWriter) =
-    let keggLines = File.ReadAllLines(keggFile)
+    let keggLines = File.ReadLines(keggFile)
     for l in keggLines do
         let elems = l.Split('\t')
         let pathw = "Pathway_" + elems.[0]
@@ -43,14 +44,14 @@ let writeTriplesFromKegg mapFile keggFile (sw:StreamWriter) =
     printfn "KEGG processed"
 
 let writeTriplesFromSTRING mapFile stringFiles (sw:StreamWriter) =
-    let mapLines = File.ReadAllLines(mapFile)
+    let mapLines = File.ReadLines(mapFile)
     let dict = new Dictionary<string, string>()
     for l in mapLines do
         let elems = l.Split('\t')
         if not(dict.ContainsKey elems.[1]) then
             dict.Add(elems.[1], elems.[0])
     for f in stringFiles do
-        let interacts = File.ReadAllLines(f)
+        let interacts = File.ReadLines(f)
         for i in interacts do
             let elems = i.Split(' ')
             let prot1 = dict.TryGetValue  elems.[0]
@@ -129,8 +130,8 @@ let writeTriplesFromGO file (sw:StreamWriter) =
         | f, t, l when f.ToString().StartsWith "http://purl.obolibrary.org/obo" ->
             let GOid = (f :?> UriNode).Uri.Segments.[(f :?> UriNode).Uri.Segments.Length - 1]
             sw.WriteLine(GOid + "\t" + l.ToString() + "\t" + t.ToString())            
-        | _ -> 
-            sw.WriteLine(f.ToString() + "\t" + l.ToString() + "\t" + t.ToString())  
+        | _ -> ()
+//            sw.WriteLine(f.ToString() + "\t" + l.ToString() + "\t" + t.ToString())  
             
     for t in g.Triples do
         edg t.Object t.Subject t.Predicate
@@ -139,7 +140,6 @@ let writeTriplesFromGO file (sw:StreamWriter) =
 
 let writeTriplesFromUniprot file (sw:StreamWriter) =
     let g = loadFromFile file
-    let triples = g.Triples.Count
 
     let mutable curProt = ""
     let mutable curGene = ""
@@ -175,25 +175,29 @@ let writeTriplesFromUniprot file (sw:StreamWriter) =
             sw.WriteLine(curGene + "\t" + "refers_to" + "\t" + MIMid)
             sw.WriteLine(MIMid + "\t" + "-refers_to" + "\t" + curGene)
 
-        | _ ->
-            sw.WriteLine(f.ToString() + "\t" + l.ToString() + "\t" + t.ToString())               
+        | _ -> ()
+//            sw.WriteLine(f.ToString() + "\t" + l.ToString() + "\t" + t.ToString())               
     
     for t in g.Triples do
         edg t.Object t.Subject t.Predicate
     printfn "Uniprot processed"
 
 let writeAllTriples basePath (sw:StreamWriter) =
-    for f in System.IO.Directory.GetFiles (basePath + "\UNIPROT") do writeTriplesFromUniprot f sw
     for f in System.IO.Directory.GetFiles (basePath + "\Entrez Gene") do writeTriplesFromEntrezGene f sw
-    writeTriplesFromSTRING (basePath + "\map\UniprotToString.txt") (System.IO.Directory.GetFiles (basePath + "\STRING")) sw
     writeTriplesFromKegg (basePath + "\map\geneToPath.txt") (basePath + "\KEGG\pathways.keg") sw
+    for f in System.IO.Directory.GetFiles (basePath + "\UNIPROT") do writeTriplesFromUniprot f sw
+    writeTriplesFromSTRING (basePath + "\map\UniprotToString.txt") (System.IO.Directory.GetFiles (basePath + "\STRING")) sw
     writeTriplesFromInterpro (basePath + "\InterPro\interpro.xml") sw
     writeTriplesFromGO (basePath + "\Gene Ontology\go.owl") sw
     writeTriplesFromHomologene (basePath + "\HomoloGene\homologene.data.txt") sw
+
+    printfn "finished"
+    System.Console.ReadKey() |> ignore
     
 [<EntryPoint>]
 let main argv = 
     let basePath = @"..\..\..\data\BioData"
     let sw = new StreamWriter(@"..\..\..\data\BioData\result\allTriples.txt")
+    sw.AutoFlush <- true
     writeAllTriples basePath sw
     0

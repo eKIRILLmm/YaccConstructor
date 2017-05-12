@@ -36,6 +36,9 @@ let getTokenFromTag tokenizer (tag:string) =
     | Equals "has_FamOrDom" () -> tokenizer "HAS_FAM_OR_DOM"
     | _ -> tokenizer "OTHER"
 
+
+let mutable startPos = false, 0
+
 let getParseInputGraph file =
 
     let vMap = new System.Collections.Generic.Dictionary<_,_>()
@@ -50,20 +53,42 @@ let getParseInputGraph file =
             let f = elems.[0]
             let lbl = elems.[1]
             let t = elems.[2]
-
+            
             match (getId f), (getId t)  with
-            | (false, fId), (false, tId) -> [|fId, f, fId + 1;
-                                              fId + 1, lbl, tId;
-                                              tId, t, tId + 1;|]
-                                            
-            | (true, fId), (false, tId) -> [|fId + 1, lbl, tId;
-                                             tId, t, tId + 1;|]
+            | (false, fId), (false, tId) -> 
+                
+                let a1, a2 = startPos
+                if a1 = false && f.Equals "Gene_348" then 
+                    let b, pos = getId f
+                    startPos <-  true, pos
 
-            | (false, fId), (true, tId) -> [|fId, f, fId + 1;
-                                             fId + 1, lbl, tId;|]
+                [|fId, f, fId + 1;
+                fId + 1, lbl, tId;
+                tId, t, tId + 1;|]
+                                            
+            | (true, fId), (false, tId) ->
+
+                let a1, a2 = startPos
+                if a1 = false && f.Equals "Gene_348" then 
+                    let b, pos = getId f
+                    startPos <-  true, pos
+
+                [|fId + 1, lbl, tId;
+                tId, t, tId + 1;|]
+
+            | (false, fId), (true, tId) -> 
+
+                let a1, a2 = startPos
+                if a1 = false && f.Equals "Gene_348" then 
+                    let b, pos = getId f
+                    startPos <-  true, pos
+
+                [|fId, f, fId + 1;
+                fId + 1, lbl, tId;|]
 
             | (true, fId), (true, tId) -> [|fId + 1, lbl, tId;|]
         |]
+
 
     let edgs = getEdges file |> Array.concat 
     
@@ -88,10 +113,12 @@ let getParseInputGraph file =
 ////            8, "interacts", 3; 
 //        |]
 
-    let allVs = edgs |> Array.collect (fun (f,l,t) -> [|f * 1<positionInInput>; t * 1<positionInInput>|]) |> Set.ofArray |> Array.ofSeq
-    let eofV = allVs.Length
+//    let allVs = edgs |> Array.collect (fun (f,l,t) -> [|f * 1<positionInInput>; t * 1<positionInInput>|]) |> Set.ofArray |> Array.ofSeq
+//    let eofV = allVs.Length
         
-    let graph = new SimpleInputGraph<_>([|1 * 1<positionInInput>|], getTokenFromTag (fun x -> (int) GLL.GPPerf1.stringToToken.[x]))
+    let a, pos = startPos
+    printfn "Gene_348, APOE pos = %A" startPos
+    let graph = new SimpleInputGraph<_>([|pos * 1<positionInInput>|], getTokenFromTag (fun x -> (int) GLL.GPPerf1.stringToToken.[x]))
     
     edgs
     |> Array.collect (fun (f,l,t) -> [|new ParserEdge<_>(f, t, l)|])
@@ -110,7 +137,7 @@ let processFile file =
     printfn "%A" edges
     let root1 =
         Yard.Generators.GLL.AbstractParser.getAllSPPFRoots GLL.GPPerf1.parserSource g1
-//    root1.[0].AstToDot GLL.GPPerf1.intToString "qwe.dot"
+    root1.[0].AstToDot GLL.GPPerf1.intToString "result.dot"
 //    let root1 =
 //        Yard.Generators.GLL.AbstractParser.getAllRangesForStartState GLL.GPPerf1.parserSource g1
 //        |> Seq.length
@@ -124,3 +151,6 @@ let performTests () =
     let allTriplesFile = @"..\..\..\data\BioData\result\allTriples.txt"    
     processFile allTriplesFile
     |> printfn "%A"
+    
+    printfn "finished"
+    System.Console.ReadKey() |> ignore
