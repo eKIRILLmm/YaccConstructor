@@ -25,7 +25,7 @@ let getTokenFromTag tokenizer (tag:string) =
     | Prefix "Protein_" () -> tokenizer "PROTEIN"
     | Prefix "Gene_" () -> tokenizer "GENE"
     | Prefix "Phenotype_" () -> tokenizer "PHENOTYPE"
-    | Equals "interacts" () -> tokenizer "INTERACTS" 
+    | Equals "interacts_with" () -> tokenizer "INTERACTS" 
     | Equals "belongs_to" () -> tokenizer "BELONGS" 
     | Equals "-belongs_to" () -> tokenizer "RBELONGS" 
     | Equals "codes_for" () -> tokenizer "CODESFOR"
@@ -39,58 +39,88 @@ let getTokenFromTag tokenizer (tag:string) =
 
 let mutable startPos = false, 0
 
-let getParseInputGraph file =
+let getEdgesVert file =
+    let lines = File.ReadLines(file)
+    [|
+    for l in lines ->
+        let elems = l.Split('\t')
+        elems.[0], elems.[1], elems.[2]
+    |]
 
+let getEdges file = 
     let vMap = new System.Collections.Generic.Dictionary<_,_>()
     let mutable idV = -1
     let getId v = if vMap.ContainsKey v then true, vMap.[v] else (idV <- idV + 2; vMap.Add(v, idV); false, idV)
-
-    let getEdges f = 
-        let lines = File.ReadLines(file)
-        [|
-        for l in lines ->
-            let elems = l.Split('\t')
-            let f = elems.[0]
-            let lbl = elems.[1]
-            let t = elems.[2]
+    let mutable count = 0
+    let lines = File.ReadLines(file)
+    [|
+    for l in lines ->
+        let elems = l.Split('\t')
+        let f = elems.[0]
+        let lbl = elems.[1]
+        let t = elems.[2]
             
-            match (getId f), (getId t)  with
-            | (false, fId), (false, tId) -> 
+        match (getId f), (getId t)  with
+        | (false, fId), (false, tId) -> 
                 
-                let a1, a2 = startPos
-                if a1 = false && f.Equals "Gene_348" then 
-                    let b, pos = getId f
-                    startPos <-  true, pos
-
-                [|fId, f, fId + 1;
-                fId + 1, lbl, tId;
-                tId, t, tId + 1;|]
+            let a1, a2 = startPos
+            if a1 = false && f.Equals "Gene_348" then 
+                let b, pos = getId f
+                startPos <-  true, pos
+            count <- count + 1
+            if count > 5000000 
+            then 
+                printfn "100000 triples processed"
+                count <- 0
+            [|fId, f, fId + 1;
+            fId + 1, lbl, tId;
+            tId, t, tId + 1;|]
                                             
-            | (true, fId), (false, tId) ->
+        | (true, fId), (false, tId) ->
 
-                let a1, a2 = startPos
-                if a1 = false && f.Equals "Gene_348" then 
-                    let b, pos = getId f
-                    startPos <-  true, pos
+            let a1, a2 = startPos
+            if a1 = false && f.Equals "Gene_348" then 
+                let b, pos = getId f
+                startPos <-  true, pos
 
-                [|fId + 1, lbl, tId;
-                tId, t, tId + 1;|]
+            count <- count + 1
+            if count > 5000000 
+            then 
+                printfn "100000 triples processed"
+                count <- 0
 
-            | (false, fId), (true, tId) -> 
+            [|fId + 1, lbl, tId;
+            tId, t, tId + 1;|]
 
-                let a1, a2 = startPos
-                if a1 = false && f.Equals "Gene_348" then 
-                    let b, pos = getId f
-                    startPos <-  true, pos
+        | (false, fId), (true, tId) -> 
 
-                [|fId, f, fId + 1;
-                fId + 1, lbl, tId;|]
+            let a1, a2 = startPos
+            if a1 = false && f.Equals "Gene_348" then 
+                let b, pos = getId f
+                startPos <-  true, pos
 
-            | (true, fId), (true, tId) -> [|fId + 1, lbl, tId;|]
-        |]
+            count <- count + 1
+            if count > 5000000 
+            then 
+                printfn "100000 triples processed"
+                count <- 0
+
+            [|fId, f, fId + 1;
+            fId + 1, lbl, tId;|]
+
+        | (true, fId), (true, tId) -> 
+            count <- count + 1
+            if count > 5000000 
+            then 
+                printfn "100000 triples processed"
+                count <- 0
+            [|fId + 1, lbl, tId;|]
+    |] |> Array.concat
 
 
-    let edgs = getEdges file |> Array.concat 
+let getParseInputGraph file =
+    
+    let edges = getEdges file
     
 //    let edgs = 
 //        [|
@@ -120,12 +150,21 @@ let getParseInputGraph file =
     printfn "Gene_348, APOE pos = %A" startPos
     let graph = new SimpleInputGraph<_>([|pos * 1<positionInInput>|], getTokenFromTag (fun x -> (int) GLL.GPPerf1.stringToToken.[x]))
     
-    edgs
+    edges
     |> Array.collect (fun (f,l,t) -> [|new ParserEdge<_>(f, t, l)|])
     |> graph.AddVerticesAndEdgeRange
     |> ignore
 
+    graph, graph.EdgeCount
 
+let getParseInputGraphVert file =
+    let edges = getEdgesVert file
+    let graph = new GraphLabelledVertex<string>([|"Gene_348"|], [||], getTokenFromTag (fun x -> (int) GLL.GPPerf1.stringToToken.[x]))
+
+    edges 
+    |> Array.collect (fun (f,l,t) -> [|new TaggedEdge<_,_>(f, t, l)|])
+    |> graph.AddEdges
+    |> ignore
 
     graph, graph.EdgeCount
         
@@ -137,7 +176,7 @@ let processFile file =
     printfn "%A" edges
     let root1 =
         Yard.Generators.GLL.AbstractParser.getAllSPPFRoots GLL.GPPerf1.parserSource g1
-    root1.[0].AstToDot GLL.GPPerf1.intToString "result.dot"
+    root1.[0].AstToDot GLL.GPPerf1.intToString "resultV.dot"
 //    let root1 =
 //        Yard.Generators.GLL.AbstractParser.getAllRangesForStartState GLL.GPPerf1.parserSource g1
 //        |> Seq.length

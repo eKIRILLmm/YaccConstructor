@@ -113,8 +113,8 @@ type LinearIputWithErrors(input: int<token> array, errorTag) =
     member this.Input = input
 
 type Pos =
-    | Edge = 1
-    | Vertex = 0
+    | Edge = 0
+    | Vertex = 1
 
 type GraphLabelledVertex<'tagType when 'tagType : equality> (initialVertices : 'tagType[], finalVertices : 'tagType[], tagToToken : 'tagType -> int) = 
     inherit AdjacencyGraph<'tagType, TaggedEdge<'tagType, 'tagType>>()
@@ -143,32 +143,32 @@ type GraphLabelledVertex<'tagType when 'tagType : equality> (initialVertices : '
             vMap.Add(v, i)
             vBackMap.Add v
         )
-        let mutable eId = 0
-        for e in edges do
-            eMap.Add(e, eId) 
-            eId <- eId + 1
+        this.Edges
+        |> Seq.iteri (fun i e ->
+            eMap.Add(e, i) 
             eBackMap.Add e
-
+        )
 
     interface IParserInput with
         member this.InitialPositions = 
             Array.map(fun x -> 
                 match (vMap.TryGetValue x) with 
-                | (true, v) -> v * 1<positionInInput>
-                | (false, v) -> failwithf "There is no vertex %A" v
+                | (true, v) -> 
+                    packPosition v Pos.Vertex
+                | (false, v) -> failwithf "There is no vertex %A" x
             ) this.InitStates
 
         [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
         member this.ForAllOutgoingEdges curPosInInput pFun =
             if (isVertexOrEdge curPosInInput) = Pos.Edge then 
                 let e = eBackMap.[getId curPosInInput]
-                pFun (this.TagToToken e.Target * 1<token>) (packPosition (vMap.[e.Target]) Pos.Vertex)
+                pFun ((this.TagToToken e.Tag) * 1<token>) (packPosition (vMap.[e.Target]) Pos.Vertex)
             else 
                 let outEdges =  vBackMap.[getId curPosInInput] |> this.OutEdges
                 outEdges |> Seq.iter
-                    (fun e -> pFun ((this.TagToToken e.Tag) * 1<token>) (eMap.[e] * 1<positionInInput>))
-//
-//        member this.PositionToString (pos : int) =
-//            sprintf "%i" pos
+                    (fun e -> pFun ((this.TagToToken vBackMap.[getId curPosInInput]) * 1<token>) (eMap.[e] * 1<positionInInput>))
+
+        member this.PositionToString (pos : int) =
+            sprintf "%i" pos
 
          
