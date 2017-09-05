@@ -108,6 +108,8 @@ let sppfTest grammarFile inputGraph nonTermName maxLength =
     let _, sppf, _ = parse ps preparedGraph true
     let nt = sppf.GetNonTermByName nonTermName ps
     let pathset = sppf.Iterate nt ps maxLength
+    let a = sppf.TerminalNodes
+    let b = sppf.GetTerminalNodes
     Assert.AreEqual(maxLength, Seq.length pathset)
 
 [<TestFixture>]
@@ -397,6 +399,19 @@ type ``GLL abstract parser tests``() =
 let f x =
     System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.LowLatency
     let t = new ``GLL abstract parser tests``()   
+
+    let vertices = new ResizeArray<int>()
+    vertices.Add(0)
+    vertices.Add(1)
+    vertices.Add(2)
+    let edges = new ResizeArray<ParserEdge<string>>()
+    edges.Add(new ParserEdge<string>(0, 1, "A"))
+    edges.Add(new ParserEdge<string>(1, 0, "A"))
+    edges.Add(new ParserEdge<string>(1, 2, "B"))
+    edges.Add(new ParserEdge<string>(2, 1, "B"))
+    let graph = new QuickGraph.AdjacencyGraph<int, ParserEdge<string>>()
+    graph.AddVerticesAndEdgeRange edges |> ignore
+    sppfTest "..\..\..\MyBrackets.yrd" graph "s" 100
 
 //         @"C:\gsv\projects\YC\YaccConstructor\tests\data\RDF\1.1.ttl"
 //         @"C:\gsv\projects\YC\YaccConstructor\tests\data\RDF\wine.rdf"

@@ -101,6 +101,8 @@ let writeTriplesFromInterpro mapFile (file:string) (sw:StreamWriter) =
 
     printfn "Interpro processed"
 
+let prots = new HashSet<string>([||])
+
 let writeTriplesFromEntrezGene mapFile files (sw:StreamWriter) =
 //    for f in files do
 //        if f = @"..\..\..\data\BioData\EntrezGene\Homo_sapiens.gene_info"
@@ -140,16 +142,27 @@ let writeTriplesFromEntrezGene mapFile files (sw:StreamWriter) =
 //                sw.WriteLine(Gene + "\t" + "Nomenclature_status" + "\t" + Nomenclature_status)
 //                sw.WriteLine(Gene + "\t" + "Other_designations" + "\t" + Other_designations)
 //                sw.WriteLine(Gene + "\t" + "Modification_date" + "\t" + Modification_date)
-            
-    let mapLines = File.ReadLines(mapFile)
-    for l in mapLines do
-        let elems = l.Split('\t')
+    
+    let mapLines = File.ReadAllLines(mapFile)
+    for x in 0..20 do
+        let elems = mapLines.[x].Split('\t')
         let protein = "Protein_" + elems.[0]
+        prots.Add(protein) |> ignore
         let arrayGene =elems.[1].Split(';')
         for i = 0 to arrayGene.Length - 2 do
             let gene = "Gene_" + arrayGene.[i]
             sw.WriteLine(protein + "\t" + "-codes_for" + "\t" + gene)
             sw.WriteLine(gene + "\t" + "codes_for" + "\t" + protein)
+    
+//    let mapLines = File.ReadLines(mapFile)
+//    for l in mapLines do
+//        let elems = l.Split('\t')
+//        let protein = "Protein_" + elems.[0]
+//        let arrayGene =elems.[1].Split(';')
+//        for i = 0 to arrayGene.Length - 2 do
+//            let gene = "Gene_" + arrayGene.[i]
+//            sw.WriteLine(protein + "\t" + "-codes_for" + "\t" + gene)
+//            sw.WriteLine(gene + "\t" + "codes_for" + "\t" + protein)
 
     printfn "EntrezGene processed"
 
@@ -170,11 +183,13 @@ let writeTriplesFromGO mapFile file (sw:StreamWriter) =
     for l in mapLines do
         let elems = l.Split('\t')
         let protein = "Protein_" + elems.[0]
-        let arrayGO =elems.[1].Split(';')
-        for g in arrayGO do
-            let go = "GO_" + g.Substring(g.IndexOf(':') + 1)
-            sw.WriteLine(protein + "\t" + "belongs_to" + "\t" + go)
-            sw.WriteLine(go + "\t" + "-belongs_to" + "\t" + protein)
+        if prots.Contains(protein)
+        then 
+            let arrayGO =elems.[1].Split(';')
+            for g in arrayGO do
+                let go = "GO_" + g.Substring(g.IndexOf(':') + 1)
+                sw.WriteLine(protein + "\t" + "belongs_to" + "\t" + go)
+                sw.WriteLine(go + "\t" + "-belongs_to" + "\t" + protein)
 
     printfn "GO processed"
 
@@ -182,12 +197,12 @@ let writeAllTriples basePath (sw:StreamWriter) =
 
     writeTriplesFromEntrezGene (basePath + "\map\UniprotToEntrezGene.txt") (System.IO.Directory.GetFiles(basePath + "\EntrezGene")) sw
     
-    writeTriplesFromKegg (basePath + "\map\geneToPath.txt") (basePath + "\KEGG\pathways.keg") sw
+//    writeTriplesFromKegg (basePath + "\map\geneToPath.txt") (basePath + "\KEGG\pathways.keg") sw
 //    writeTriplesFromSTRING (basePath + "\map\UniprotToString.txt") (System.IO.Directory.GetFiles (basePath + "\STRING")) sw
-    writeTriplesFromInterpro (basePath + "\map\UniprotToInterpro.txt") (basePath + "\InterPro\interpro.xml") sw
+//    writeTriplesFromInterpro (basePath + "\map\UniprotToInterpro.txt") (basePath + "\InterPro\interpro.xml") sw
     writeTriplesFromGO (basePath + "\map\UniprotToGO.txt") (basePath + "\GeneOntology\go.owl") sw
-    writeTriplesFromHomologene (basePath + "\HomoloGene\homologene.data.txt") sw
-
+//    writeTriplesFromHomologene (basePath + "\HomoloGene\homologene.data.txt") sw
+    sw.Close()
     printfn "finished"
     System.Console.ReadKey() |> ignore
     

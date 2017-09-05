@@ -1,0 +1,14 @@
+Gene_1	codes_for	Protein_1
+Protein_1	-codes_for	Gene_1
+Gene_2	codes_for	Protein_2
+Protein_2	-codes_for	Gene_2
+Protein_1	belongs_to	GO_1
+GO_1	-belongs_to	Protein_1
+Protein_1	belongs_to	GO_2
+GO_2	-belongs_to	Protein_1
+Protein_1	belongs_to	GO_3
+GO_3	-belongs_to	Protein_1
+Protein_2	belongs_to	GO_1
+GO_1	-belongs_to	Protein_2
+Protein_2	belongs_to	GO_3
+GO_3	-belongs_to	Protein_2
