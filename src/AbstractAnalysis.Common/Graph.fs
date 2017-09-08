@@ -151,6 +151,9 @@ type GraphLabelledVertex<'tagType when 'tagType : equality> (initialVertices : '
             eBackMap.Add e
         )
 
+    new (initial : 'tagType[], tagToToken : 'tagType -> int) = 
+        GraphLabelledVertex<_>(initial, initial, tagToToken)
+
     interface IParserInput with
         member this.InitialPositions = 
             Array.map(fun x -> 
