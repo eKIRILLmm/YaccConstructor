@@ -126,13 +126,15 @@ type GraphLabelledVertex<'tagType when 'tagType : equality> (initialVertices : '
 
     let packPosition edge (position: Pos) = 
         if position = Pos.Vertex 
-        then ((1 <<< 31) ||| edge) * 1<positionInInput>
+        then 
+            let y = ((1 <<< 15) ||| edge) * 1<positionInInput>
+            y
         else edge * 1<positionInInput>
     let isVertexOrEdge (position : int<positionInInput>) =
-        if int position < 0 
-        then Pos.Vertex
-        else Pos.Edge
-    let getId (packedValue : int<positionInInput>) = int packedValue &&& 0x7FFFFFFF
+        if int position < 32768 
+        then Pos.Edge
+        else Pos.Vertex
+    let getId (packedValue : int<positionInInput>) = int packedValue &&& 0x7FFF
 
     member val InitStates = initialVertices 
     member val FinalStates = finalVertices with get, set
@@ -165,14 +167,20 @@ type GraphLabelledVertex<'tagType when 'tagType : equality> (initialVertices : '
 
         [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
         member this.ForAllOutgoingEdges curPosInInput pFun =
+            let c = getId curPosInInput
             if (isVertexOrEdge curPosInInput) = Pos.Edge 
             then 
                 let e = eBackMap.[getId curPosInInput]
-                pFun ((this.TagToToken e.Tag) * 1<token>) (packPosition (vMap.[e.Target]) Pos.Vertex)
+                let nextPos = packPosition (vMap.[e.Target]) Pos.Vertex
+                pFun ((this.TagToToken e.Tag) * 1<token>) (nextPos)
             else 
                 let outEdges =  vBackMap.[getId curPosInInput] |> this.OutEdges
                 outEdges |> Seq.iter
                     (fun e -> pFun ((this.TagToToken vBackMap.[getId curPosInInput]) * 1<token>) (eMap.[e] * 1<positionInInput>))
 
         member this.PositionToString (pos : int) =
-            sprintf "%i" pos
+            if pos = -1
+            then sprintf "-1" 
+            elif isVertexOrEdge (pos * 1<positionInInput>) = Pos.Edge
+            then sprintf "edge: %i" pos
+            else sprintf "vertex: %i" (getId (pos * 1<positionInInput>))

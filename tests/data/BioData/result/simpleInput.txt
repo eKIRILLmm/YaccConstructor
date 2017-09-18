@@ -4,3 +4,4 @@ GO_1	-belongs_to	Protein_2
 Protein_2	interacts_with	Protein_3
 Protein_3	-codes_for	Gene_2
 Gene_2	codes_for	Protein_3
+Gene_3	codes_for	Protein_4

@@ -36,17 +36,8 @@ let needChangeDirectory =
     (@"C:\Users\Artem Gorokhov\AppData\Local\JetBrains\Installations\ReSharperPlatformVs14" = Directory.GetCurrentDirectory())
     || (@"C:\Users\artem\AppData\Local\JetBrains\Installations\ReSharperPlatformVs14" = Directory.GetCurrentDirectory())
 
-let outputDir = ""//@"../../../src/GLL.AbstractParser.SimpleTest/"
-
-let dataDir = 
-    if needChangeDirectory
-    then @"C:/Code/YaccConstructor/tests/data/AbstractGLL/"
-    else @"./data/AbstractGLL/"
-let grammarsDir = 
-    if needChangeDirectory
-    then @"C:/Code/YaccConstructor/tests/GLL.AbstractParser.Simple.Tests/"
-    else @"./GLL.AbstractParser.Simple.Tests/"
-
+let dataDir = @"C:/projects/YC/YaccConstructor/tests/data/AbstractGLL/"
+let grammarsDir = @"C:/projects/YC/YaccConstructor/tests/GLL.AbstractParser.Simple.Tests/"
 
 let lbl tokenId = tokenId
 let edg f t l = new ParserEdge<_>(f,t,lbl l)
@@ -87,7 +78,7 @@ let test grammarFile inputFile nodesCount edgesCount termsCount ambiguityCount =
     let input  = getInputGraph parser.StringToToken inputFile
     let tree = buildAst parser input
     //printfn "%A" tree
-    //tree.AstToDot parser.IntToString (grammarsDir + inputFile + ".dot")
+    tree.AstToDot (dataDir + inputFile + ".dot")
     let n, e, t, amb = tree.CountCounters
     //printfn "%d %d %d %d" n e t amb
     Assert.AreEqual(nodesCount, n, sprintf "Nodes expected:%i, found:%i." nodesCount n)
@@ -400,18 +391,18 @@ let f x =
     System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.LowLatency
     let t = new ``GLL abstract parser tests``()   
 
-    let vertices = new ResizeArray<int>()
-    vertices.Add(0)
-    vertices.Add(1)
-    vertices.Add(2)
-    let edges = new ResizeArray<ParserEdge<string>>()
-    edges.Add(new ParserEdge<string>(0, 1, "A"))
-    edges.Add(new ParserEdge<string>(1, 0, "A"))
-    edges.Add(new ParserEdge<string>(1, 2, "B"))
-    edges.Add(new ParserEdge<string>(2, 1, "B"))
-    let graph = new QuickGraph.AdjacencyGraph<int, ParserEdge<string>>()
-    graph.AddVerticesAndEdgeRange edges |> ignore
-    sppfTest "..\..\..\MyBrackets.yrd" graph "s" 100
+//    let vertices = new ResizeArray<int>()
+//    vertices.Add(0)
+//    vertices.Add(1)
+//    vertices.Add(2)
+//    let edges = new ResizeArray<ParserEdge<string>>()
+//    edges.Add(new ParserEdge<string>(0, 1, "A"))
+//    edges.Add(new ParserEdge<string>(1, 0, "A"))
+//    edges.Add(new ParserEdge<string>(1, 2, "B"))
+//    edges.Add(new ParserEdge<string>(2, 1, "B"))
+//    let graph = new QuickGraph.AdjacencyGraph<int, ParserEdge<string>>()
+//    graph.AddVerticesAndEdgeRange edges |> ignore
+//    sppfTest "..\..\..\MyBrackets.yrd" graph "s" 100
 
 //         @"C:\gsv\projects\YC\YaccConstructor\tests\data\RDF\1.1.ttl"
 //         @"C:\gsv\projects\YC\YaccConstructor\tests\data\RDF\wine.rdf"
@@ -426,8 +417,9 @@ let f x =
 //            printfn "triples in %A: %A" (System.IO.Path.GetFileName p) f.Triples.Count
     //YC.GLL.Abstarct.Tests.RDFPerformance.parse @"C:\gsv\projects\YC\YaccConstructor\tests\data\RDF\foaf.rdf"
     //YC.GLL.Abstarct.Tests.RDFPerformance.parse @"C:\gsv\projects\YC\YaccConstructor\tests\data\RDF\wine.rdf"
-    let basePath = if x.Length = 1 then x.[0] else @"..\..\..\data\RDF"
-    YC.GLL.Abstarct.Tests.RDFPerformance.performTests basePath
+//    let basePath = if x.Length = 1 then x.[0] else @"..\..\..\data\RDF"
+//    YC.GLL.Abstarct.Tests.RDFPerformance.performTests basePath
+    test "RightRecursionCheck.yrd" "RightRecursionCheck.txt" 15 16 4 1
     0
 
 

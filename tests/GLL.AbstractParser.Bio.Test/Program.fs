@@ -16,8 +16,8 @@ open Yard.Core.Conversions.ExpandMeta
 open System.Collections.Generic
 open System.Linq
 
-let dataDir = @"./data/AbstractGLL/"
-let grammarsDir = @"./GLL.AbstractParser.Simple.Tests/"
+let dataDir = @"C:/projects/YC/YaccConstructor/tests/data/AbstractGLL_LabelledVert/"
+let grammarsDir = @"C:/projects/YC/YaccConstructor/tests/GLL.AbstractParser.Simple.Tests/"
 
 let getInputGraphVertLbl tokenizer inputFile startPos =    
     let edges = 
@@ -26,12 +26,12 @@ let getInputGraphVertLbl tokenizer inputFile startPos =
         |> Array.map (fun s -> let x = s.Split([|' '|])
                                x.[0], x.[1], x.[2])
     let edg (f : string) (t : string) (l : string) = 
-        new TaggedEdge<_,_>((f, t, l) )
+        new TaggedEdge<_,_>(f, l, t)
 
-    let g = new GraphLabelledVertex<_>(startPos, (fun x -> (tokenizer x) |>int))
+    let g = new GraphLabelledVertex<_>(startPos, (fun x -> ((tokenizer x) |>int)))
     
     [|for (first, tag, last) in edges -> edg first tag last |]
-    |> g.AddVerticesAndEdgeRange
+    |> g.AddEdges
     |> ignore
     
     g 
@@ -53,7 +53,7 @@ let test grammarFile inputFile startPos nodesCount edgesCount termsCount ambigui
     let input  = getInputGraphVertLbl parser.StringToToken inputFile startPos
     let tree = buildAst parser input
     //printfn "%A" tree
-    //tree.AstToDot parser.IntToString (grammarsDir + inputFile + ".dot")
+    tree.AstToDot (dataDir + inputFile + ".dot")
     let n, e, t, amb = tree.CountCounters
     //printfn "%d %d %d %d" n e t amb
     Assert.AreEqual(nodesCount, n, sprintf "Nodes expected:%i, found:%i." nodesCount n)
@@ -74,6 +74,9 @@ type ``GLL abstract parser graph lbl vert tests``() =
 let main argv = 
     System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.LowLatency
     let t = new ``GLL abstract parser graph lbl vert tests``() 
+    test "RightRecursionCheck.yrd" 
+         "RightRecursionCheck.txt"
+         [|"P"|] 15 16 4 1
 //    BioDataPreproc.preprocBioData()
 //    BioDataPerformance.performTests()
     0
