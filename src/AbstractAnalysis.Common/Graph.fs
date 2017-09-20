@@ -112,29 +112,11 @@ type LinearIputWithErrors(input: int<token> array, errorTag) =
 
     member this.Input = input
 
-type Pos =
-    | Edge = 0
-    | Vertex = 1
-
 type GraphLabelledVertex<'tagType when 'tagType : equality> (initialVertices : 'tagType[], finalVertices : 'tagType[], tagToToken : 'tagType -> int) = 
     inherit AdjacencyGraph<'tagType, TaggedEdge<'tagType, 'tagType>>()
 
-    let eMap = new System.Collections.Generic.Dictionary<_,_>()
     let vMap = new System.Collections.Generic.Dictionary<_,_>()
     let vBackMap = new ResizeArray<_>()
-    let eBackMap = new ResizeArray<_>()
-
-    let packPosition edge (position: Pos) = 
-        if position = Pos.Vertex 
-        then 
-            let y = ((1 <<< 15) ||| edge) * 1<positionInInput>
-            y
-        else edge * 1<positionInInput>
-    let isVertexOrEdge (position : int<positionInInput>) =
-        if int position < 32768 
-        then Pos.Edge
-        else Pos.Vertex
-    let getId (packedValue : int<positionInInput>) = int packedValue &&& 0x7FFF
 
     member val InitStates = initialVertices 
     member val FinalStates = finalVertices with get, set
@@ -147,11 +129,6 @@ type GraphLabelledVertex<'tagType when 'tagType : equality> (initialVertices : '
             vMap.Add(v, i)
             vBackMap.Add v
         )
-        this.Edges
-        |> Seq.iteri (fun i e ->
-            eMap.Add(e, i) 
-            eBackMap.Add e
-        )
 
     new (initial : 'tagType[], tagToToken : 'tagType -> int) = 
         GraphLabelledVertex<_>(initial, initial, tagToToken)
@@ -160,27 +137,20 @@ type GraphLabelledVertex<'tagType when 'tagType : equality> (initialVertices : '
         member this.InitialPositions = 
             Array.map(fun x -> 
                 match (vMap.TryGetValue x) with 
-                | (true, v) -> 
-                    packPosition v Pos.Vertex
-                | (false, v) -> failwithf "There is no vertex %A" x
+                | (true, i) -> i * 2<positionInInput>
+                | (false, _) -> failwithf "There is no vertex %A" x
             ) this.InitStates
 
         [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
         member this.ForAllOutgoingEdges curPosInInput pFun =
-            let c = getId curPosInInput
-            if (isVertexOrEdge curPosInInput) = Pos.Edge 
+            if ((int)curPosInInput % 2) = 0
             then 
-                let e = eBackMap.[getId curPosInInput]
-                let nextPos = packPosition (vMap.[e.Target]) Pos.Vertex
-                pFun ((this.TagToToken e.Tag) * 1<token>) (nextPos)
+                let v = vBackMap.[(int)curPosInInput / 2]
+                pFun ((this.TagToToken v) * 1<token>) (curPosInInput + 1<positionInInput>)
             else 
-                let outEdges =  vBackMap.[getId curPosInInput] |> this.OutEdges
-                outEdges |> Seq.iter
-                    (fun e -> pFun ((this.TagToToken vBackMap.[getId curPosInInput]) * 1<token>) (eMap.[e] * 1<positionInInput>))
+                let v = vBackMap.[((int)curPosInInput - 1) / 2]
+                this.OutEdges v |> Seq.iter
+                    (fun e -> pFun ((this.TagToToken e.Tag) * 1<token>) (vMap.[e.Target] * 2<positionInInput>))
 
         member this.PositionToString (pos : int) =
-            if pos = -1
-            then sprintf "-1" 
-            elif isVertexOrEdge (pos * 1<positionInInput>) = Pos.Edge
-            then sprintf "edge: %i" pos
-            else sprintf "vertex: %i" (getId (pos * 1<positionInInput>))
+            sprintf "%i" pos

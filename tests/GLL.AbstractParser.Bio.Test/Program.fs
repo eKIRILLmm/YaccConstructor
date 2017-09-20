@@ -19,6 +19,12 @@ open System.Linq
 let dataDir = @"C:/projects/YC/YaccConstructor/tests/data/AbstractGLL_LabelledVert/"
 let grammarsDir = @"C:/projects/YC/YaccConstructor/tests/GLL.AbstractParser.Simple.Tests/"
 
+let removeIdFromVert (s:string) = 
+    let ind =  s.IndexOf("_")
+    if ind <> -1
+    then s.Substring(0, ind)
+    else s
+
 let getInputGraphVertLbl tokenizer inputFile startPos =    
     let edges = 
         File.ReadAllLines (dataDir + inputFile)
@@ -28,7 +34,7 @@ let getInputGraphVertLbl tokenizer inputFile startPos =
     let edg (f : string) (t : string) (l : string) = 
         new TaggedEdge<_,_>(f, l, t)
 
-    let g = new GraphLabelledVertex<_>(startPos, (fun x -> ((tokenizer x) |>int)))
+    let g = new GraphLabelledVertex<_>(startPos, (fun x -> ((tokenizer (removeIdFromVert x)) |>int)))
     
     [|for (first, tag, last) in edges -> edg first tag last |]
     |> g.AddEdges
@@ -69,14 +75,115 @@ type ``GLL abstract parser graph lbl vert tests``() =
         test "RightRecursionCheck.yrd" 
              "RightRecursionCheck.txt"
              [|"P"|] 15 16 4 1
+    
+    [<Test>]  
+    member this._01_PrettySimpleCalc_SequenceInput () =
+        test "PrettySimpleCalc.yrd" 
+             "PrettySimpleCalc.txt"
+             [|"NUM_1"|] 15 14 3 0
+
+    [<Test>]
+    member this._06_NotAmbigousSimpleCalc_Loop () =
+        test "NotAmbigousSimpleCalc.yrd" 
+             "NotAmbigousSimpleCalc_Loop.txt"
+             [|"NUM_1"|] 17 18 4 1
+
+    [<Test>]
+    member this._07_NotAmbigousSimpleCalc_LoopInLoop () =
+        test "NotAmbigousSimpleCalc.yrd" 
+             "NotAmbigousSimpleCalc_LoopInLoop.txt"
+             [|"NUM_1"|] 27 29 7 2 
+
+    [<Test>]
+    member this._14_NotAmbigousSimpleCalcWith2Ops_Loop () =
+        test "NotAmbigousSimpleCalcWith2Ops.yrd" 
+             "NotAmbigousSimpleCalcWith2Ops_Loop.txt"
+             [|"NUM_1"|] 31 31 8 1
+
+    [<Test>]
+    member this._25_UnambiguousBrackets_BiggerCircle () =
+        test "StrangeBrackets.yrd" 
+             "StrangeBrackets2.txt"
+             [|"LBR_1"|] 30 32 8 2
+
+    [<Test>]
+    member this._29_Attrs () =
+        test "Attrs.yrd" 
+             "Attrs.txt"
+             [|"A_1"|] 15 14 5 0
+
+    [<Test>]
+    member this._30_Condition () =
+        test "Cond.yrd" 
+             "Cond.txt"
+             [|"IF"|] 42 47 5 1
+
+    [<Test>]
+    member this._31_Counter () =
+        test "Counter.yrd" 
+             "Counter.txt"
+             [|"A_1"|] 35 40 5 0
+
+    [<Test>]
+    member this._35_Expression () =
+        test "Expr.yrd" 
+             "Expr.txt"
+             [|"N_1"|] 24 27 5 1
+
+    [<Test>]
+    member this._36_First () =
+        test "First.yrd" 
+             "First.txt"
+             [|"A_1"|] 15 14 5 0
+
+    [<Test>]
+    member this._38_LolCalc () =
+        test "LolCalc.yrd" 
+             "LolCalc.txt"
+             [|"A_1"|] 115 174 11 10
+
+    [<Test>]
+    member this._41_Longest () =
+        test "Longest.yrd" 
+             "Longest.txt"
+             [|"A_1"|] 24 25 6 0
+
+    [<Test>]
+    member this._43_Omit () =
+        test "Omit.yrd" 
+             "Omit.txt"
+             [|"A_1"|] 22 20 4 0
+
+    [<Test>]
+    member this._45_SimpleRightRecursion () =
+        test "SimpleRightRecursion.yrd" 
+             "SimpleRightRecursion.txt"
+             [|"B_1"|] 15 15 3 0
+
+    [<Test>]
+    member this._46_BadLeftRecursion () =
+        test "BadLeftRecursion.yrd" 
+             "BadLeftRecursion.txt"
+             [|"B_1"|] 19 24 3 1
+
+    [<Test>]
+    member this._47_SimpleAmb () =
+        test "SimpleAmb.yrd" 
+             "SimpleAmb.txt"
+             [|"A"|] 10 11 3 1
+
+    [<Test>]
+    member this._49_SimpleLeftRecursion () =
+        test "SimpleLeftRecursion.yrd" 
+             "SimpleLeftRecursion.txt"
+             [|"B_1"|] 9 8 3 0
 
 [<EntryPoint>]
 let main argv = 
-    System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.LowLatency
-    let t = new ``GLL abstract parser graph lbl vert tests``() 
-    test "RightRecursionCheck.yrd" 
-         "RightRecursionCheck.txt"
-         [|"P"|] 15 16 4 1
+//    System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.LowLatency
+//    let t = new ``GLL abstract parser graph lbl vert tests``() 
+    
+
 //    BioDataPreproc.preprocBioData()
 //    BioDataPerformance.performTests()
     0
