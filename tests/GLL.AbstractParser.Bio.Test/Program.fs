@@ -16,7 +16,7 @@ open Yard.Core.Conversions.ExpandMeta
 open System.Collections.Generic
 open System.Linq
 
-let dataDir = @"C:/projects/YC/YaccConstructor/tests/data/AbstractGLL_LabelledVert/"
+let dataDir = @"C:/projects/YC/YaccConstructor/tests/data/AbstractGLL_LabelledVertices/"
 let grammarsDir = @"C:/projects/YC/YaccConstructor/tests/GLL.AbstractParser.Simple.Tests/"
 
 let removeIdFromVert (s:string) = 

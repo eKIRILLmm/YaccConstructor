@@ -391,6 +391,11 @@ let f x =
     System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.LowLatency
     let t = new ``GLL abstract parser tests``()   
 
+        
+    test "NotAmbigousSimpleCalcWith2Ops.yrd" 
+            "NotAmbigousSimpleCalcWith2Ops_Loop.txt"
+            28 28 7 1
+              
 //    let vertices = new ResizeArray<int>()
 //    vertices.Add(0)
 //    vertices.Add(1)
