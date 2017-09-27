@@ -10,4 +10,4 @@ protein : protein similar PROTEIN | PROTEIN
 gene : gene similar GENE | GENE
 go : go similar GO | GO
 
-other : OTHER | FAM_OR_DOM | HAS_FAM_OR_DOM | REFERS | PHENOTYPE
+grammar = protein *[4..10] ;
