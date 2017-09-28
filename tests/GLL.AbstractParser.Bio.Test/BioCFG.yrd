@@ -1,6 +1,5 @@
 [<Start>]
-
-s : gene
+grammar : gene *[1..2]
 
 v : protein | gene | go
 
@@ -10,4 +9,3 @@ protein : protein similar PROTEIN | PROTEIN
 gene : gene similar GENE | GENE
 go : go similar GO | GO
 
-grammar = protein *[4..10] ;
