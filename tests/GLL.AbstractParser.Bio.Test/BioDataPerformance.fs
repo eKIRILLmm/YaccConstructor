@@ -3,15 +3,24 @@
 open VDS.RDF
 open VDS.RDF.Parsing
 
-open QuickGraph
-open AbstractAnalysis.Common
-open Yard.Generators.GLL.AbstractParser
-open Yard.Generators.Common.ASTGLL
+open Yard.Generators.GLL
+open Yard.Generators.Common.ASTGLLFSA
 open Yard.Generators.GLL.ParserCommon
+open AbstractAnalysis.Common
+open Yard.Frontends.YardFrontend
+open YC.API
+open AbstractParser
+open QuickGraph
+open System.Collections.Generic
 open YC.GLL.SPPF
 
 open System.IO
 open System.Collections.Generic
+
+let private PrepareGrammarFromFile grammarFile = 
+        let fe = new YardFrontend()
+        let gen = new GLL()
+        generate grammarFile fe gen None Seq.empty [||] [] :?> ParserSourceGLL
 
 let PrintToDotVert (graph: AdjacencyGraph<_,TaggedEdge<_,_>>) name (tagToString: _ -> string) (*(tokenToString : 'token -> string) (numToToken : int -> 'token)*) = 
     use out = new System.IO.StreamWriter (name : string)
@@ -170,7 +179,7 @@ let getParseInputGraph file =
 
     graph, graph.EdgeCount
 
-let getParseInputGraphVert file =
+let getParseInputGraphVert file (ps : ParserSourceGLL) =
     let edges = getEdgesVert file
     let allGenes = edges |> Array.choose (fun (f,l,t) -> 
         if getTokenFromTag id f = "GENE"
@@ -183,8 +192,8 @@ let getParseInputGraphVert file =
                             if i % 99 = 0
                             then Some(x)
                             else None)
-        
-    let graph = new GraphLabelledVertex<string>(halfGenes, halfGenes, (fun t -> getTokenFromTag (fun x -> (int) GLL.BioCFG.stringToToken.[x]) t))
+    let edgeTagToInt x = getTokenFromTag (fun t -> t |> ps.StringToToken |> int) x
+    let graph = new GraphLabelledVertex<string>(halfGenes, halfGenes, (fun t -> edgeTagToInt t))
 
     edges 
     |> Array.collect (fun (f,l,t) -> [|new TaggedEdge<_,_>(f,t,l)|])
@@ -193,21 +202,24 @@ let getParseInputGraphVert file =
 
     graph, graph.EdgeCount
         
-let processFile file =
+let processFile inputFile grammarFile =
+
+    let ps = PrepareGrammarFromFile grammarFile
+
     let g1, edges = 
-        getParseInputGraphVert file 
+        getParseInputGraphVert inputFile ps
 
     printfn "%A" edges
 
     let start = System.DateTime.Now
    
-    let _,sppf,_ = parse GLL.BioCFG.parserSource g1 true
+    let _,sppf,_ = parse ps g1 true
     
     let time1 = (System.DateTime.Now - start).TotalMilliseconds
 
     PrintToDotVert g1 "inputGraph.dot" id
 
-    let subgraph = SPPFToSubgraph sppf GLL.BioCFG.parserSource
+    let subgraph = SPPFToSubgraph sppf ps
 
     let subgraphVert = SubgraphToGraphVert subgraph g1 
     PrintToDotVert subgraphVert "subgraph.dot" id
@@ -215,6 +227,8 @@ let processFile file =
     edges, time1
 
 let performTests() =
+    let BioCFG = @"..\..\BioCFG.yrd"
+
     let allTriplesFile = @"..\..\..\data\BioData\result\allTriples.txt"
     let simpleInputFile = @"..\..\..\data\BioData\result\simpleInput.txt"
     let genes20 = @"..\..\..\data\BioData\result\20genes.txt"
@@ -229,7 +243,7 @@ let performTests() =
     let genes3000 = @"..\..\..\data\BioData\result\3000genes.txt"
     let genes5000 = @"..\..\..\data\BioData\result\5000genes.txt"
     let genes10000 = @"..\..\..\data\BioData\result\10000genes.txt"
-    processFile genes300
+    processFile genes300 BioCFG
     |> printfn "%A"
     
     printfn "finished"
