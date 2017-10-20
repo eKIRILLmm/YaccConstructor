@@ -1,11 +1,10 @@
 [<Start>]
-grammar : gene *[1..2]
+s : gene
 
 v : protein | gene | go
 
-similar : CODESFOR v RCODESFOR | BELONGS v RBELONGS | INTERACTS
+similar : CODESFOR v RCODESFOR | BELONGS v RBELONGS
 
 protein : protein similar PROTEIN | PROTEIN
 gene : gene similar GENE | GENE
 go : go similar GO | GO
-

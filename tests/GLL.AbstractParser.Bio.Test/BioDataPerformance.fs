@@ -26,9 +26,6 @@ let PrintToDotVert (graph: AdjacencyGraph<_,TaggedEdge<_,_>>) name (tagToString:
     use out = new System.IO.StreamWriter (name : string)
     out.WriteLine("digraph AST {")
     out.WriteLine "rankdir=LR"
-//        for i=0 to graph.VertexCount-1 do
-//            out.Write (i.ToString() + "; ")
-//        out.WriteLine()
     for i in graph.Vertices do
         let edges = graph.OutEdges i
         for e in edges do
@@ -55,9 +52,6 @@ let PrintToDot (graph: AdjacencyGraph<_,ParserEdge<_>>) name (tagToString: _ -> 
     use out = new System.IO.StreamWriter (name : string)
     out.WriteLine("digraph AST {")
     out.WriteLine "rankdir=LR"
-//        for i=0 to graph.VertexCount-1 do
-//            out.Write (i.ToString() + "; ")
-//        out.WriteLine()
     for i in graph.Vertices do
         let edges = graph.OutEdges i
         for e in edges do
@@ -93,7 +87,13 @@ let getTokenFromTag tokenizer (tag:string) =
     match tag with
     | Prefix "Protein_" () -> tokenizer "PROTEIN"
     | Prefix "Gene_" () -> tokenizer "GENE"
+    | Prefix "HomoloGene_" () -> tokenizer "HOMOLOGENE"
     | Prefix "Phenotype_" () -> tokenizer "PHENOTYPE"
+    | Prefix "Pathway_" () -> tokenizer "PATHWAY"
+    | Equals "has" () -> tokenizer "HAS" 
+    | Equals "-has" () -> tokenizer "RHAS" 
+    | Equals "is_homologous_to" () -> tokenizer "HOMOLOGTO"
+    | Equals "-is_homologous_to" () -> tokenizer "RHOMOLOGTO"
     | Equals "interacts_with" () -> tokenizer "INTERACTS" 
     | Equals "belongs_to" () -> tokenizer "BELONGS" 
     | Equals "-belongs_to" () -> tokenizer "RBELONGS" 
@@ -101,8 +101,7 @@ let getTokenFromTag tokenizer (tag:string) =
     | Equals "-codes_for" () -> tokenizer "RCODESFOR"
     | Equals "refers_to" () -> tokenizer "REFERS"
     | Prefix "GO_" () -> tokenizer "GO"
-    | Prefix "FamilyOrDomain_" () -> tokenizer "FAM_OR_DOM"
-    | Equals "has_FamilyOrDomain" () -> tokenizer "HAS_FAM_OR_DOM"
+    | Prefix "FamilyOrDomain_" () -> tokenizer "FAMDOM"
     | _ -> tokenizer "OTHER"
 
 let getEdgesVert file =
@@ -185,15 +184,16 @@ let getParseInputGraphVert file (ps : ParserSourceGLL) =
         if getTokenFromTag id f = "GENE"
         then Some(f)
         else None)
+    let firstGene = [|allGenes.[0]|]
     let genes = allGenes |> Set.ofArray |> Array.ofSeq 
-    let halfGenes = genes 
+    let fewGenes = genes 
                     |> Array.indexed 
                     |> Array.choose (fun (i, x) -> 
                             if i % 99 = 0
                             then Some(x)
                             else None)
     let edgeTagToInt x = getTokenFromTag (fun t -> t |> ps.StringToToken |> int) x
-    let graph = new GraphLabelledVertex<string>(halfGenes, halfGenes, (fun t -> edgeTagToInt t))
+    let graph = new GraphLabelledVertex<string>(firstGene, firstGene, (fun t -> edgeTagToInt t))
 
     edges 
     |> Array.collect (fun (f,l,t) -> [|new TaggedEdge<_,_>(f,t,l)|])
@@ -203,48 +203,28 @@ let getParseInputGraphVert file (ps : ParserSourceGLL) =
     graph, graph.EdgeCount
         
 let processFile inputFile grammarFile =
-
     let ps = PrepareGrammarFromFile grammarFile
-
     let g1, edges = 
         getParseInputGraphVert inputFile ps
-
-    printfn "%A" edges
+    printfn "\nNumber of edges: %i" edges
 
     let start = System.DateTime.Now
-   
     let _,sppf,_ = parse ps g1 true
-    
+    let subgraph = SPPFToSubgraph sppf ps
     let time1 = (System.DateTime.Now - start).TotalMilliseconds
 
-    PrintToDotVert g1 "inputGraph.dot" id
-
-    let subgraph = SPPFToSubgraph sppf ps
-
+//    PrintToDotVert g1 "inputGraph.dot" id
     let subgraphVert = SubgraphToGraphVert subgraph g1 
-    PrintToDotVert subgraphVert "subgraph.dot" id
-
-    edges, time1
+//    PrintToDotVert subgraphVert "subgraph.dot" id
+    printfn "Number of edges in subgraph: %i" subgraphVert.EdgeCount
+    printfn "Time: %f\n" time1
 
 let performTests() =
-    let BioCFG = @"..\..\BioCFG.yrd"
-
-    let allTriplesFile = @"..\..\..\data\BioData\result\allTriples.txt"
-    let simpleInputFile = @"..\..\..\data\BioData\result\simpleInput.txt"
-    let genes20 = @"..\..\..\data\BioData\result\20genes.txt"
-    let genes50 = @"..\..\..\data\BioData\result\50genes.txt"
-    let genes100 = @"..\..\..\data\BioData\result\100genes.txt"
-    let genes300 = @"..\..\..\data\BioData\result\300genes.txt"
-    let genes500 = @"..\..\..\data\BioData\result\500genes.txt"
-    let genes700 = @"..\..\..\data\BioData\result\700genes.txt"
-    let allGenes = @"..\..\..\data\BioData\result\allGenes.txt"
-    let genes1000 = @"..\..\..\data\BioData\result\1000genes.txt"
-    let genes2000 = @"..\..\..\data\BioData\result\2000genes.txt"
-    let genes3000 = @"..\..\..\data\BioData\result\3000genes.txt"
-    let genes5000 = @"..\..\..\data\BioData\result\5000genes.txt"
-    let genes10000 = @"..\..\..\data\BioData\result\10000genes.txt"
-    processFile genes300 BioCFG
-    |> printfn "%A"
+    let BioCFGAllDatabases = @"..\..\BioCFG_AllDatabases.yrd"
+    
+    let files = System.IO.Directory.GetFiles( @"..\..\..\data\BioData\result")
+    for f in files do
+        processFile f BioCFGAllDatabases
     
     printfn "finished"
     System.Console.ReadKey() |> ignore
