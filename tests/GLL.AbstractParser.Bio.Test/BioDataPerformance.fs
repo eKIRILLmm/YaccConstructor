@@ -150,18 +150,34 @@ let getEdges file =
     |] |> Array.concat
 
 
-let getParseInputGraph file =
+let getParseInputGraph file (ps : ParserSourceGLL) =
     let edges = getEdges file
     let allVs = edges |> Array.collect (fun (f,l,t) -> [|f * 1<positionInInput>; t * 1<positionInInput>|]) |> Set.ofArray |> Array.ofSeq
-    let graph = new SimpleInputGraph<_>(allVs, id)
+    
+    let allGenes = edges |> Array.choose (fun (f,l,t) -> 
+        if getTokenFromTag id l = "GENE"
+        then Some(f * 1<positionInInput>)
+        else None)
+
+    let genes = allGenes |> Set.ofArray |> Array.ofSeq
+    let firstGene = [|allGenes.[0]|]
+     
+    let edgeTagToInt x = getTokenFromTag (fun t -> t |> ps.StringToToken |> int) x
+    let graph = new SimpleInputGraph<_>(firstGene, edgeTagToInt)
 
     edges
-    |> Array.collect (fun (f,l,t) -> 
-        if getTokenFromTag (fun x -> (int) GLL.BioCFG.stringToToken.[x]) l <> (int) GLL.BioCFG.stringToToken.["OTHER"]
-        then [|new ParserEdge<_>(f, t, getTokenFromTag (fun x -> (int) GLL.BioCFG.stringToToken.[x]) l)|]
-        else [||])
+    |> Array.collect (fun (f,l,t) -> [|new ParserEdge<_>(f, t, l)|])
     |> graph.AddVerticesAndEdgeRange
     |> ignore
+
+
+//    edges
+//    |> Array.collect (fun (f,l,t) -> 
+//        if getTokenFromTag (fun x -> (int) GLL.BioCFG.stringToToken.[x]) l <> (int) GLL.BioCFG.stringToToken.["OTHER"]
+//        then [|new ParserEdge<_>(f, t, getTokenFromTag (fun x -> (int) GLL.BioCFG.stringToToken.[x]) l)|]
+//        else [||])
+//    |> graph.AddVerticesAndEdgeRange
+//    |> ignore
 
     graph, graph.EdgeCount
 
@@ -191,8 +207,11 @@ let getParseInputGraphVert file (ps : ParserSourceGLL) =
         
 let processFile inputFile grammarFile =
     let ps = PrepareGrammarFromFile grammarFile
+    let start0 = System.DateTime.Now
     let g1, edges = 
-        getParseInputGraphVert inputFile ps
+        getParseInputGraph inputFile ps
+    let time0 = (System.DateTime.Now - start0).TotalMilliseconds
+    printfn "\nTime to get graph: %f" time0
     printfn "\nNumber of edges: %i" edges
 
     let start = System.DateTime.Now
@@ -201,9 +220,9 @@ let processFile inputFile grammarFile =
     let time1 = (System.DateTime.Now - start).TotalMilliseconds
 
 //    PrintToDotVert g1 "inputGraph.dot" id
-    let subgraphVert = SubgraphToGraphVert subgraph g1 
+//    let subgraphVert = SubgraphToGraphVert subgraph g1 
 //    PrintToDotVert subgraphVert "subgraph.dot" id
-    printfn "Number of edges in subgraph: %i" subgraphVert.EdgeCount
+//    printfn "Number of edges in subgraph: %i" subgraphVert.EdgeCount
     printfn "Time: %f\n" time1
 
 let performTests() =
